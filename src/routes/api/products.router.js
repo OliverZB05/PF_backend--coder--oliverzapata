@@ -11,9 +11,9 @@ router.get('/:pid', getID_Products);
 //======== { Otros métodos } ========
 router.put('/:pid', put_Products); 
 router.post('/', post_Products);  
-router.delete('/:pid', delete_Products); 
-router.post('/mockingproducts', mockingproducts)
 router.delete('/deleteMockingProducts', deleteMockingProducts);
+router.delete('/:pid', delete_Products); 
+router.post('/mockingproducts', mockingproducts);
 //======== { Otros métodos } ========
 
 export default router;

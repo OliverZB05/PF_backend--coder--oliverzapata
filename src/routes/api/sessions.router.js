@@ -6,12 +6,12 @@ const router = Router();
 
 //========= Register =========
 router.post('/register', (req, res, next) => {
-passport.authenticate('register', (err, data, info) => {
-if (err) return next(err);
-if (!data) return res.send({ status: 'error', message: info.message });
-res.cookie('jwt', data.token, { httpOnly: true });
-res.send({ status: 'success', message: 'User registered', token: data.token });
-})(req, res, next);
+    passport.authenticate('register', (err, data, info) => {
+    if (err) return next(err);
+    if (!data) return res.send({ status: 'error', message: info.message });
+    res.cookie('jwt', data.token, { httpOnly: true });
+    res.send({ status: 'success', message: 'User registered', token: data.token });
+    })(req, res, next);
 });
 //========= Register =========
 
@@ -55,12 +55,12 @@ res.redirect('/products');
 router.post('/reset', async (req, res) => {
 try {
 const { email, password } = req.body;
-if (!email || !password) return res.status(400).send({ status: 'error', error: 'Incomplete values' });
-const user = await userModel.findOne({ email });
-if (!user) return res.status(400).send({ status: 'error', error: 'Este correo no coincide con ningún usuario registrado' });
-user.password = createHash(password);
-await userModel.updateOne({ email }, user);
-res.send({ status: 'success', message: 'Password reset' })
+    if (!email || !password) return res.status(400).send({ status: 'error', error: 'Incomplete values' });
+    const user = await userModel.findOne({ email });
+    if (!user) return res.status(400).send({ status: 'error', error: 'Este correo no coincide con ningún usuario registrado' });
+    user.password = createHash(password);
+    await userModel.updateOne({ email }, user);
+    res.send({ status: 'success', message: 'Password reset' })
 } catch (error) {
 req.logger(req, 'error', `${error.message}`);
 res.status(500).send({ status: 'error', error: error.message });

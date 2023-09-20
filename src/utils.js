@@ -22,13 +22,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const generateProduct = () => {
+
     return {
         _id: new mongoose.Types.ObjectId(),
         title: faker.commerce.productName(),
         description: faker.commerce.productDescription(),
         price: faker.commerce.price(),
         thumbnail: [faker.image.imageUrl()],
-        stock: faker.datatype.number(),
+        stock: faker.datatype.number({min: 0, max: 19}),
         category: faker.commerce.department(),
         status: true,
         code: true,

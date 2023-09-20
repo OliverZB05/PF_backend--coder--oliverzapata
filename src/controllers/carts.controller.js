@@ -9,48 +9,89 @@ const ProductsInstance = new Products();
 import TicketService from '../service/ticket.service.js';
 const ticketServiceInstance = new TicketService();
 
+import CartRepository from '../repositories/carts.repository.js';
+const cartRepository = new CartRepository();
+
+import ProductRepository from '../repositories/products.repository.js';
+const productRepository = new ProductRepository();
+
 //======== { getAll_Carts / mostrar todos los carritos } ========
+const getUserCarts = async (user) => {
+    if (!Array.isArray(user.carts)) {
+        throw new Error("El objeto de usuario no tiene una propiedad de carts válida");
+    }
+    const cartIds = user.carts.map(c => c.cart);
+    const carts = await CartsInstance.getAll(cartIds);
+    // Convertir cada carrito a un objeto JavaScript y eliminar el campo 'products'
+    const transformedCarts = carts.map(cart => {
+        const cartObject = cart.toObject();
+        delete cartObject.products;
+        return cartObject;
+    });
+    console.log(transformedCarts);
+    return transformedCarts;
+}
+
+
+
 const getAll_Carts = async (req, res, next) => {
     passport.authenticate('jwt', { session: false }, async (err, user, info) => {
-        if (err) {
-            return next(err);
-        }
-        if (!user) {
-            return res.status(401).send({ status: "error", error: "Unauthorized" });
-        }
+        if (err) { return next(err); }
+        if (!user) { return res.status(401).send({ status: "error", error: "Unauthorized" }); }
         req.user = user;
 
         if (!Array.isArray(req.user.carts)) {
             req.logger(req, 'error', "El objeto de usuario no tiene una propiedad de carts válida");
             throw new Error("El objeto de usuario no tiene una propiedad de carts válida");
         }
-        
+
         try {
-            // Obtenga solo los carritos asociados con el usuario actual
             const cartIds = req.user.carts.map(c => c.cart);
             const carts = await CartsInstance.getAll(cartIds);
 
             if (carts.some(cart => !Array.isArray(cart.products))) {
                 req.logger(req, 'error', "Algunos objetos del carrito no tienen una propiedad de products válida");
                 throw new Error("Algunos objetos del carrito no tienen una propiedad de products válida");
-            }            
+            }
 
-            // Transforma la respuesta
-            const transformedCarts = carts.map(cart => {
-                cart.products = cart.products.map(p => ({
-                    id: p.product,
-                    quantity: p.quantity
+            const transformedCarts = await Promise.all(carts.map(async cart => {
+                cart.products = await Promise.all(cart.products.map(async p => {
+
+                    if (p.IDprod) {
+                        const product = await productRepository.findById(p.IDprod);
+                        if (product) {
+                        // El producto existe y tiene _id
+                        const productObj = product.toObject();
+                        delete productObj._id;
+                        return { name: p.name, price: p.price, IDprod: product._id.toString(), quantity: p.quantity, stock: p.stock };
+                        } else {
+                        // El producto con IDprod no existe en la base de datos
+                        console.log(`El producto con IDprod ${p.IDprod} no existe en la base de datos`);
+                        return null;
+                        }
+                    } else {
+                        // El producto no tiene un IDprod
+                        return null;
+                    }
+                    
+
                 }));
+                // Filtra cualquier producto nulo que pueda haber sido devuelto por la función map
+                cart.products = cart.products.filter(product => product !== null);
                 return cart;
-            });
+            }));
             
+
             res.status(200).send({ status: 200, payload: transformedCarts });
         } catch (error) {
+            console.log(error); 
             req.logger(req, 'error', `${error.message}`);
             res.status(500).send({ error: error.message });
         }
     })(req, res, next);
 };
+
+
 //======== { getAll_Carts / mostrar todos los carritos } ========
 
 //======== { getID_Carts / mostrar por ID los carritos } ========
@@ -107,7 +148,7 @@ const post_Carts = async (req, res, next) => {
         const { cart } = req.body;
         try {
             // Crea el carrito
-            const result = await CartsInstance.create({ cart });
+            const result = await CartsInstance.create({ cart }, req.user.email);
 
             // Asociar el carrito con el usuario actual
             req.user.carts.push({ cart: result._id });
@@ -128,19 +169,33 @@ const postProds_Carts = async (req, res) => {
     const prodId = req.params.pid;
     const quantity = req.body.quantity || 1;
 
-    // Verificar si cartId y prodId son ObjectIds válidos
     if (!mongoose.Types.ObjectId.isValid(cartId) || !mongoose.Types.ObjectId.isValid(prodId)) {
         return res.status(400).send({ error: 'Invalid cartId or prodId' });
     }
 
     try {
-        const result = await CartsInstance.addProductToCart(req, cartId, prodId, quantity);
-        res.status(200).send({ status: 200, payload: result });
+        // Busca el carrito en la base de datos
+        const cart = await CartsInstance.getId(cartId);
+
+        // Verifica si el producto ya está en el carrito
+        const productInCart = cart.products.find(product => product.IDprod.toString() === prodId);
+
+
+        if (productInCart) {
+            // Si el producto ya está en el carrito, devuelve un error
+            res.status(409).send({ error: 'El producto ya está en el carrito' });
+        } else {
+            const updatedCart = await CartsInstance.addProductToCart(req, cartId, prodId, quantity);
+            res.status(200).send({ status: 200, payload: updatedCart });
+        }
     } catch (error) {
         req.logger(req, 'error', `${error.message}`);
         res.status(500).send({ error: error.message });
     }
 };
+
+
+
 
 
 //======== { postProds_Carts / pasar productos a los carritos } =======
@@ -206,7 +261,7 @@ const delete_Carts = async (req, res) => {
         req.logger(req, 'error', `${error.message}`);
         res.status(500).send({ status: "error", error});
     }
-};
+}; 
 //======== { delete_Carts / eliminar un carrito } =======
 
 //======== { deleteProds_Carts / borrar todos los productos de un carrito } =======
@@ -224,6 +279,33 @@ const deleteProds_Carts = async (req, res) => {
     }
 };
 //======== { deleteProds_Carts / borrar todos los productos de un carrito } =======
+
+//======== { deleteProds_Carts / borrar todos los productos de un carrito } =======
+
+//======== { incrementar y decrementar cantidades } =======
+const incrementQuantity_Carts = async (req, res, next) => {
+    const { cartId, productId } = req.params;
+    try {
+        const newQuantity = await CartsInstance.incrementQuantity(cartId, productId);
+        res.json({ newQuantity });
+    } catch (error) {
+        res.status(500).json({ error: error.toString() });
+    }
+};
+
+const decrementQuantity_Carts = async (req, res, next) => {
+    const { cartId, productId } = req.params;
+    /* console.log('decrementQuantity_Carts', { cartId, productId });  */ // Imprime los valores de cartId y productId
+    try {
+        const newQuantity = await CartsInstance.decrementQuantity(cartId, productId);
+        res.json({ newQuantity });
+    } catch (error) {
+        res.status(500).json({ error: error.toString() });
+    }
+};
+
+//======== { incrementar y decrementar cantidades } =======
+
 
 const purchase_Cart = async (req, res, next) => {
     passport.authenticate('jwt', { session: !1 }, async (err, user, info) => {
@@ -251,7 +333,7 @@ const purchase_Cart = async (req, res, next) => {
             if (Array.isArray(cart.products)) {
                 for (let product of cart.products) {
                     // Obtener la información del producto
-                    const productInfo = await ProductsInstance.getID_Products(product.product);
+                    const productInfo = await ProductsInstance.getID_Products(product.IDprod);
                 
                     // Verificar si hay suficiente stock para el producto
                     if (product.quantity <= productInfo.stock) {
@@ -305,4 +387,4 @@ const purchase_Cart = async (req, res, next) => {
     })(req, res, next)
 }
 
-export { getAll_Carts, getID_Carts, post_Carts, postProds_Carts, put_Carts, putProds_Carts, deleteProdsOne_Carts, delete_Carts, deleteProds_Carts, purchase_Cart };
+export { getUserCarts, getAll_Carts, getID_Carts, post_Carts, postProds_Carts, put_Carts, putProds_Carts, deleteProdsOne_Carts, delete_Carts, deleteProds_Carts, incrementQuantity_Carts, decrementQuantity_Carts, purchase_Cart };

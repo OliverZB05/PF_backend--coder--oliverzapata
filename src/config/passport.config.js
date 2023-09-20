@@ -9,6 +9,8 @@ import { PRIVATE_KEY } from './contans.js';
 import config from './config.js';
 import { UserDto } from '../dao/DTOs/config.dto.js';
 
+import { getUserCarts } from '../controllers/carts.controller.js';
+
 const JWTStrategy = passportJWT.Strategy;
 const ExtractJWT = passportJWT.ExtractJwt;
 const LocalStrategy = local.Strategy;
@@ -44,7 +46,6 @@ passport.use('jwt', new JWTStrategy({
     }
 }));
 
-    
 
 //=========={ Login }==========
 passport.use('login', new LocalStrategy({
@@ -63,6 +64,10 @@ passport.use('login', new LocalStrategy({
         if (!isValidPassword(user, password)) {
             return done(null, false, { message: 'Contraseña incorrecta' });
         } else {
+            // Actualizar last_connection en el modelo de usuario
+            user.last_connection = new Date();
+            await user.save();
+
             // Creando un token JWT
             const token = jwt.sign({ id: user._id }, PRIVATE_KEY);
             return done(null, { user, token });
@@ -72,121 +77,125 @@ passport.use('login', new LocalStrategy({
         return done(`Error al obtener el usuario: ${error}`)
     }
 }));
+
 //=========={ Login }==========
 
 //=========={ Register }==========
 passport.use('register', new LocalStrategy({
-    usernameField: 'email',
-    passReqToCallback: true
+usernameField: 'email',
+passReqToCallback: true
 }, async (req, username, password, done) => {
-    const { first_name, last_name, email, age, documents, last_connection } = req.body;
-    try {
-        // Verificando si el correo ya está registrado
-        const user = await userModel.findOne({ email: username });
+const { first_name, last_name, email, age, documents, last_connection } = req.body;
+try {
+// Verificando si el correo ya está registrado
+const user = await userModel.findOne({ email: username });
 
-        if (user) {
-            return done(null, false, { message: 'El correo pertenece a un usuario ya registrado' })
-        }
+if (user) {
+return done(null, false, { message: 'El correo pertenece a un usuario ya registrado' })
+}
 
-        let role;
-        // Asignando el rol de administrador si el correo y la contraseña coinciden con los valores de configuración
-        if (email === config.adminEmail && password === config.adminPassword) {
-            role = "admin";
-        }
-        const userToSave = {
-            first_name,
-            last_name,
-            email,
-            age,
-            password: createHash(password),
-            role
-        }
-        // Creando un nuevo usuario en la base de datos
-        const result = await userModel.create(userToSave);
-        // Creando un token JWT
-        const token = jwt.sign({ id: result._id }, PRIVATE_KEY);
-        return done(null, { user: result, token })
-    } catch (error) {
-        req.logger(req, 'error', `${error.message}`);
-        return done(`Error al obtener el usuario: ${error}`)
-    }
+let role;
+// Asignando el rol de administrador si el correo y la contraseña coinciden con los valores de configuración
+if (email === config.adminEmail && password === config.adminPassword) {
+role = "admin";
+}
+const userToSave = {
+first_name,
+last_name,
+email,
+age,
+password: createHash(password),
+role
+}
+// Creando un nuevo usuario en la base de datos
+const result = await userModel.create(userToSave);
+// Creando un token JWT
+const token = jwt.sign({ id: result._id }, PRIVATE_KEY);
+return done(null, { user: result, token })
+} catch (error) {
+req.logger(req, 'error', `${error.message}`);
+return done(`Error al obtener el usuario: ${error}`)
+}
 }));
 //=========={ Register }==========
 
 //=========={ Login en github }==========
 passport.use('github', new GitHubStrategy({
-    clientID: "Iv1.ad3077c6cea461c0",
-    clientSecret: "52e9e374d314ec5d4b39159799ea43d6ef83752c",
-    callbackURL: "http://localhost:8080/api/sessions/github-callback",
-    scope: ['user:email'],
-    passReqToCallback: true 
+clientID: "Iv1.ad3077c6cea461c0",
+clientSecret: "52e9e374d314ec5d4b39159799ea43d6ef83752c",
+callbackURL: "http://localhost:8080/api/sessions/github-callback",
+scope: ['user:email'],
+passReqToCallback: true 
 }, async (req, accessToken, refreshToken, profile, done) => {
-    try {
-        const email = profile.emails[0].value;
-        // Buscando al usuario en la base de datos
-        const user = await userModel.findOne({ email })
-        const role = 'user';
-        if (!user) {
-            // Creando un nuevo usuario en la base de datos si no existe
-            const newUser = {
-                first_name: profile.username,
-                name: profile.username,
-                last_name: '',
-                age: '',
-                email,
-                password: '',
-                role
-            }
+try {
+const email = profile.emails[0].value;
+// Buscando al usuario en la base de datos
+const user = await userModel.findOne({ email })
+const role = 'user';
+if (!user) {
+// Creando un nuevo usuario en la base de datos si no existe
+const newUser = {
+first_name: profile.username,
+name: profile.username,
+last_name: '',
+age: '',
+email,
+password: '',
+role
+}
 
-            const result = await userModel.create(newUser);
+const result = await userModel.create(newUser);
 
-            // Creando un token JWT
-            const token = jwt.sign({ id: result._id }, PRIVATE_KEY);
-            
-            // Asignando el objeto user a la sesión
-            req.session.user = result;
+// Creando un token JWT
+const token = jwt.sign({ id: result._id }, PRIVATE_KEY);
 
-            done(null, { user: result, token });
-        } else {
-            // Creando un token JWT
-            const token = jwt.sign({ id: user._id }, PRIVATE_KEY);
-            done(null, { user, token });
-        }
-    } catch (error) {
-        req.logger(req, 'error', `${error.message}`);
-        return done(error);
-    }
+// Asignando el objeto user a la sesión
+req.session.user = result;
+
+done(null, { user: result, token });
+} else {
+// Creando un token JWT
+const token = jwt.sign({ id: user._id }, PRIVATE_KEY);
+done(null, { user, token });
+}
+} catch (error) {
+req.logger(req, 'error', `${error.message}`);
+return done(error);
+}
 }));
 
 //=========={ Login en github }==========
 
 
 //=========={ current }==========
+// Modificar la estrategia de Passport para utilizar getUserCarts
 passport.use('current', new JWTStrategy({
     jwtFromRequest: ExtractJWT.fromExtractors([(req) => {
-        let token = null;
-        // Extrayendo el token JWT de las cookies
-        if (req && req.cookies) {
-            token = req.cookies['jwt'];
-        }
+    let token = null;
+    // Extrayendo el token JWT de las cookies
+    if (req && req.cookies) {
+        token = req.cookies['jwt'];
+    }
         return token;
     }]),
     secretOrKey: PRIVATE_KEY,
     passReqToCallback: true 
-}, async (req, jwtPayload, done) => {
+    }, async (req, jwtPayload, done) => {
     try {
-        // Buscando al usuario en la base de datos
+    // Buscando al usuario en la base de datos
         const user = await userModel.findById(jwtPayload.id);
-        if (user) {
-            // Creando una instancia del DTO y pasándole el objeto user
-            const userDto = new UserDto(user);
-            // Devolviendo la instancia del DTO en lugar del objeto user
-            return done(null, userDto);
-        } else {
-            return done(null, false);
-        }
+    if (user) {
+        // Creando una instancia del DTO y pasándole el objeto user
+        const userDto = new UserDto(user);
+        // Obteniendo los carritos del usuario usando getUserCarts
+        userDto.carts = await getUserCarts(userDto);
+        // Devolviendo la instancia del DTO en lugar del objeto user
+        return done(null, userDto);
+    } else {
+        return done(null, false);
+    }
     } catch (error) {
-        req.logger(req, 'error', `${error.message}`);
+    req.logger(req, 'error', `${error.message}`);
         return done(error);
     }
 }));
@@ -201,8 +210,8 @@ passport.serializeUser(function(data, done) {
 
 passport.deserializeUser(async function(id, done) {
     try {
-    const user = await userModel.findById(id);
-    done(null, user);
+        const user = await userModel.findById(id);
+        done(null, user);
     } catch (err) {
     done(err);
     }

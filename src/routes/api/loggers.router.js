@@ -6,7 +6,6 @@ const router = Router();
 //======== { Método de logs } ========
 router.get('/loggerTest', (req, res) => {
     LogTests(req, res, ['debug', 'http', 'info', 'warning', 'error', 'fatal']);
-
 });
 //======== { Método de logs } ========
 

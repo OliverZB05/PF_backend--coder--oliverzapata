@@ -5,7 +5,9 @@ const products = new Products();
 
 import { productModel } from "../dao/mongo/models/products.model.js";
 import { generateProduct } from "../utils.js";
-import ProductDto from '../dao/DTOs/config.dto.js';
+import { ProductDto } from '../dao/DTOs/config.dto.js';
+import { transporter } from '../transporter.js';
+import userModel from "../dao/dbManagers/models/users.model.js";
 
 //======== { get_Products / productos con paginación } ========
 const get_Products = async (req, res) => {
@@ -132,7 +134,7 @@ const post_Products = async (req, res) => {
         error: `El producto con título "${title}" y descripción "${description}" ya existe en la base de datos.`,
         });
     } else {
-        console.log('req.user.email:', req.user.email); // Imprimir el valor de req.user.email
+        /* console.log('req.user.email:', req.user.email); */ // Imprimir el valor de req.user.email
 
         const productDto = new ProductDto({
         title,
@@ -144,7 +146,7 @@ const post_Products = async (req, res) => {
         owner: req.user.email,
         });
 
-        console.log('productDto:', productDto); // Imprimir el objeto productDto
+        /* console.log('productDto:', productDto); */ // Imprimir el objeto productDto
 
         const dbProduct = { ...productDto };
         delete dbProduct['title/category'];
@@ -155,7 +157,7 @@ const post_Products = async (req, res) => {
         delete response.title;
         delete response.category;
 
-        console.log('response:', response); // Imprimir el objeto response
+        /* console.log('response:', response); */ // Imprimir el objeto response
         res.status(200).send({ status: 200, payload: response });
     }
     } catch (error) {
@@ -234,7 +236,7 @@ const put_Products = async (req, res) => {
 //======== { put_Products / actualizar productos } ========
 
 //======== { delete_Products / borrar productos } ========
-const delete_Products = async (req, res) => {
+/* const delete_Products = async (req, res) => {
     const { pid } = req.params;
 
     try {
@@ -257,7 +259,64 @@ const delete_Products = async (req, res) => {
     req.logger(req, 'error', `${error.message}`);
     res.status(500).send({ status: 'error', error });
     }
+}; */
+
+const delete_Products = async (req, res) => {
+    const { pid } = req.params;
+
+    try {
+        // Buscar el producto en la base de datos por su ID
+        const product = await productModel.findById(pid);
+
+        // Verificar si el producto existe en la base de datos
+        if (!product) {
+            return res.status(404).json({ message: 'Producto no encontrado' });
+        }
+
+        // Verificar si el usuario tiene permiso para eliminar el producto
+        if (req.user.role === 'premium' && product.owner !== req.user.email) {
+            return res.status(403).json({ message: 'No tienes permiso para realizar esta acción' });
+        }
+
+        const productsResult = await products.delete_Products(pid);
+
+        // Buscar al propietario del producto en la base de datos
+        const owner = await userModel.findOne({ email: product.owner });
+
+        // Verificar si el propietario es un usuario premium
+        if (owner && owner.role === 'premium') {
+            // Crear un mensaje de correo electrónico
+            const message = `
+            <html>
+            <head>
+            <title>Su producto ha sido eliminado</title>
+            </head>
+            <body>
+            <p>Estimado/a usuario</p>
+            <p>Le informamos que su producto en nuestra aplicación ha sido eliminado.</p>
+            <p>Si tiene alguna pregunta, por favor comuníquese con nosotros para obtener más información.</p>
+            <p>Atentamente,</p>
+            <p>El equipo de soporte</p>
+            </body>
+            </html>
+            `;
+
+            // Enviar el correo electrónico
+            await transporter.sendMail({
+                from: 'Prueba',
+                to: product.owner,
+                subject: 'Su producto ha sido eliminado',
+                html: message
+            });
+        }
+
+        res.status(200).send({ status: 200, payload: productsResult });
+    } catch (error) {
+        req.logger(req, 'error', `${error.message}`);
+        res.status(500).send({ status: 'error', error });
+    }
 };
+
 //======== { delete_Products / borrar productos } ========
 
 //======== { updateProductStock / actualizar el stock del producto } ========

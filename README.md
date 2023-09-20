@@ -113,3 +113,6 @@ http://localhost:8080/api/sessions/github-callback
 
 ### Ruta para ver documentación<br>
 - http://localhost:8080/api/docs/
+
+### Ruta para ver administración<br>
+- http://localhost:8080/api/manager/

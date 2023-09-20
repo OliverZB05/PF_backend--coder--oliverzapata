@@ -1,6 +1,8 @@
 //========={ Dependencias }=========
 import express from 'express';
 import exphbs from 'express-handlebars';
+import Handlebars from 'handlebars';
+import { allowInsecurePrototypeAccess } from '@handlebars/allow-prototype-access';
 import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
 import session from 'express-session';
@@ -13,6 +15,7 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUiExpress from 'swagger-ui-express';
+import fs from 'fs';
 //========={ Dependencias }=========
 
 // Importar el archivo config.js
@@ -61,8 +64,13 @@ app.use(flash());
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = config.nodeTlsRejectUnauthorized;
 
+// Registra el helper
 const hbs = exphbs.create({
+    handlebars: allowInsecurePrototypeAccess(Handlebars),
     helpers: {
+        multiply: function(a, b) {
+            return a * b;
+        },
         debug: function (value) {
             if (process.env.NODE_ENV === 'development') {
                 developmentLogger.log('info', 'Current Context');
@@ -93,7 +101,7 @@ const hbs = exphbs.create({
 app.engine("handlebars", hbs.engine);
 app.set("view engine", "handlebars");
 
-app.set("view engine", "handlebars");
+// Lee y compila la plantilla CartDetails.handlebars
 app.use(express.static(`${__dirname}/rendered/public`));  // Aquí se especifica el nuevo directorio del js de las vistas
 app.set('views', `${__dirname}/rendered/views`); // Aquí se especifica el nuevo directorio de vistas
 
@@ -126,7 +134,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 //========={ Inicialización de passport }=========
 
-
 const swaggerOptions = {
     definition: {
         openapi: '3.0.1',
@@ -143,7 +150,9 @@ app.use('/api/docs', swaggerUiExpress.serve, swaggerUiExpress.setup(specs));
 
 function checkRole(roles) {
     return (req, res, next) => {
+
         if (req.isAuthenticated()) {
+
             if (roles.includes(req.user.role)) {
                 return next();
             } else {
@@ -162,6 +171,7 @@ function checkRole(roles) {
         }
     };
 }
+
 
 //========={ Usando de routers }=========
 app.use("/", viewsProductRouter);
@@ -392,79 +402,3 @@ io.on("connection", (socket) => {
 app.set('socketio', io);
 io.sockets.setMaxListeners(20);
 //========={ Usando socket.io }========
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

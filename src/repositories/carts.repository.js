@@ -22,9 +22,20 @@ export default class CartRepository {
         return carts;
     }
 
+    async findAndPopulate(filter) {
+        const carts = await cartsModel.find(filter).populate('products.IDprod');
+        return carts;
+    }
+    
+
     async findById(id) {
         const cart = await cartsModel.findById(id);
         return cart;
+    }
+
+    async findByIdProds(id) {
+        const query = cartsModel.findById(id);
+        return query;
     }
 
     async findByIdPage(id) {

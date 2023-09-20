@@ -4,9 +4,10 @@
     <p>Correo: {{user.email}}</p>
     <p>Edad: {{user.age}}</p>
     <p>Rol: {{user.role}}</p>
-    <a href="/api/sessions/logout"><button>Salir</button></a><br>
+    <a href="/api/sessions/logout"><button>Cerrar sesión</button></a>
+    <a href="/api/users/premium/{{user._id}}" onclick="event.preventDefault(); changeToPremium('{{user._id}}');"><button>Cambiarse a premium</button></a>
+    <a href="/carts/CartList"><button>Ir la lista de carritos</button></a>
 </div> <br>
-
 
 <ul id="products-list">
 {{#each products}}
@@ -16,11 +17,11 @@
     <p>Precio: {{this.price}}</p>
     <p>Stock: {{this.stock}}</p>
     <p>Categoría: {{this.category}}</p>
-    <button onclick="addToCart('{{this._id}}')">Agregar al carrito</button>
+    <p>ID: {{this._id}}</p>
+    <button class="add-to-cart-button" data-product-id="{{this._id}}">Agregar al carrito</button>
     </li>
 {{/each}}
 </ul>
-
 
 {{#if prevPage}}
 <a href="/products?page={{prevPage}}">Anterior</a>
@@ -28,7 +29,6 @@
 {{#if nextPage}}
 <a href="/products?page={{nextPage}}">Siguiente</a>
 {{/if}}
-
 
 <script src="/socket.io/socket.io.js"></script>  
 <script src="/js/product-JS.js"></script>

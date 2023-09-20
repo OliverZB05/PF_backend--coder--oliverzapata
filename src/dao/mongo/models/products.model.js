@@ -47,4 +47,8 @@ owner: {
 });
 //========={ Esquema de products }=========
 
-export const productModel = mongoose.model(productsCollection, productSchema);
+// Aquí es donde registras tu esquema con Mongoose
+mongoose.model('Product', productSchema);
+
+// Y aquí es donde exportas el modelo para que pueda ser utilizado en otros archivos
+export const productModel = mongoose.model('Product');
