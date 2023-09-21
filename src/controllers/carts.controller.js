@@ -1,17 +1,10 @@
 import passport from 'passport';
 import mongoose from 'mongoose'; 
-import Factory from "../dao/factory.js";
+import ProductsMongo from '../dao/mongo/products.mongo.js';
+import CartsMongo from '../dao/mongo/carts.mongo.js';
 
-let CartsInstance;
-let ProductsInstance;
-
-async function init() {
-const { Carts, Products } = await Factory();
-    CartsInstance = new Carts();
-    ProductsInstance = new Products();
-}
-
-init();
+let CartsInstance = new CartsMongo();
+let ProductsInstance = new ProductsMongo();
 
 import TicketService from '../service/ticket.service.js';
 const ticketServiceInstance = new TicketService();
