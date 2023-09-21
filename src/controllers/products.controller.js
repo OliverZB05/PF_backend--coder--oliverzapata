@@ -8,7 +8,7 @@ import { ProductDto } from '../dao/DTOs/config.dto.js';
 import { transporter } from '../transporter.js';
 import userModel from "../dao/dbManagers/models/users.model.js";
 
-//======= { get_Products / productos con paginación } =======
+//======== { get_Products / productos con paginación } ========
 const get_Products = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1; // Número de página actual
