@@ -1,7 +1,14 @@
 import Factory from "../dao/factory.js";
-const { Carts, Products } = await Factory();
 
-const products = new Products();
+let CartsInstance;
+let products;
+
+async function init() {
+const { Carts, Products } = await Factory();
+    products = new Products();
+}
+
+init();
 
 import { productModel } from "../dao/mongo/models/products.model.js";
 import { generateProduct } from "../utils.js";
