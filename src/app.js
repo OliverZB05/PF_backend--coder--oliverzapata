@@ -356,11 +356,13 @@ app.post('/reset-password', async (req, res) => {
 
 
 //========={ Usando socket.io }========
-const server = app.listen(8080, () => {
+const port = process.env.PORT || 8080;
+
+const server = app.listen(port, "0.0.0.0", () => {
     if (process.env.NODE_ENV === 'development') {
-        developmentLogger.log('info', 'Listening on 8080');
+        developmentLogger.log('info', `Listening on ${port}`);
     } else {
-        productionLogger.log('info', 'Listening on 8080');
+        productionLogger.log('info', `Listening on ${port}`);
     }
 });
 
