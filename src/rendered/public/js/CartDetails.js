@@ -82,18 +82,13 @@ const displayTotalCartPrice = () => {
             .then(data => {
             const quantityElement = document.querySelector(`.quantity[data-product-id="${productId}"]`);
             quantityElement.textContent = data.newQuantity;
-            console.log(data.newQuantity);
 
             if (data.newQuantity === 0) {
                 // Encuentra la fila del producto y la elimina
                 const productRow = document.getElementById(`product-row-${productId}`);
-                console.log('1.-Entró a remove!!!');
                 productRow.remove();
-                console.log('2.-Ejecutó remove!!!');
                 displayTotalCartPrice();
             } else {
-                console.log('3.-Entró al else!!!');
-
                 const unitPriceElement = document.querySelector(`.unit-price[data-product-id="${productId}"]`);
                 const unitPrice = Number(unitPriceElement.dataset.unitPrice);
                 const totalPriceElement = document.querySelector(`.total-price[data-product-id="${productId}"]`);
