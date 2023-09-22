@@ -40,7 +40,6 @@ const addToCart = async (productId) => {
     
     fetch(`/api/carts/${cartId}/product/${productId}`, { method: 'POST' })
     .then(response => {
-        console.log('Respuesta recibida:', response);
         if (!response.ok) {
         if (response.status === 409) { // Suponiendo que tu servidor devuelve un código de estado 409 cuando un producto ya está en el carrito
             Swal.fire({
