@@ -1,0 +1,469 @@
+paths:
+  /api/carts/getAll:
+    get:
+      summary: Obtiene todos los carritos de la lista de carritos
+      tags:
+      - Carts
+      responses:
+        "200":
+          description: Los carritos fueron mostrados con éxito.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cart'
+        "500":
+          description: Pasó un error al momento de querer mostrar los carritos.
+
+
+    delete:
+      summary: Borra un carrito según su cid
+      tags:
+      - Carts
+      parameters:
+      - name: cid
+        in: path
+        required: true
+        description: El id del carrito
+        schema:
+          type: string 
+      responses: 
+        "200":
+          description: El carrito fue borrado satisfactoriamente de la BDD según su ID
+        "500":
+          description: Hubo un error al eliminar el carrito por su ID
+
+
+
+  /api/carts/{cid}:
+    get:
+      summary: Obtiene un carrito según su cid
+      tags:
+      - Carts
+      parameters:
+      - name: cid
+        in: path
+        required: true
+        description: El id del carrito
+        schema:
+          type: string 
+      responses: 
+        "200":
+          description: El carrito fue obtenido satisfactoriamente de la BDD según su ID
+        "500":
+          description: Hubo un error al mostrar el carrito por su ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+
+    
+    put:
+      summary: Actualiza el carrito para tener paginación
+      tags:
+      - Carts
+      parameters:
+      - name: cid
+        in: path
+        required: true
+        description: El id del carrito
+        schema:
+          type: string 
+      responses: 
+        "200":
+          description: El carrito fue actualizado correctamente de la BDD según su ID
+        "500":
+          description: Hubo un error al actualizar el carrito para poner paginación mediante su ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/requestBodies/updateCartPaginated'
+
+    delete:
+      summary: Elimina todos los productos de un carrito
+      tags:
+      - Carts
+      parameters:
+      - name: cid
+        in: path
+        required: true
+        description: El id del carrito
+        schema:
+          type: string 
+      responses: 
+        "200":
+          description: Los productos del carrito fueron correctamente eliminados de la BDD según su ID
+        "500":
+          description: Hubo un error al eliminar el carrito por su ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/requestBodies/deleteCartResponse'
+
+
+
+
+  /api/carts:
+    post:
+      summary: Crea carritos
+      tags:
+      - Carts
+      responses:
+        "401":
+          description: Solo el rol usuario puede crear carritos
+        "200":
+          description: El carrito fue creado con éxito
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cart'
+        "500":
+          description: Pasó un error al momento de querer crear un carritos.
+
+
+  /{cid}/product/{pid}:
+    post:
+      summary: Pasa productos al carrito específicado por su cid y pid
+      tags:
+      - Carts
+      parameters:
+      - name: cid
+        in: path
+        required: true
+        description: El id del carrito
+      - name: pid
+        in: path
+        required: true
+        description: El id del producto
+      responses:
+        "400":
+          description: alguna de las ID específicadas en la ruta no son válidas
+        "200":
+          description: A el carrito se le pasó el producto de forma éxitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cart'
+        "500":
+          description: Pasó un error al momento de querer pasar un producto al carrito
+
+    
+    put:
+      summary: Actualiza la cantidad de un producto del carrito a partir de su cid y pid
+      tags:
+      - Carts
+      parameters:
+      - name: cid
+        in: path
+        required: true
+        description: El id del carrito
+      - name: pid
+        in: path
+        required: true
+        description: El id del producto
+        schema:
+          type: string 
+      requestBody:
+        required: true
+        content:
+            application/json:
+              schema:
+                $ref: '#/components/requestBodies/updateCart'
+      responses: 
+        "200":
+          description: El producto del carrito fue actualizado correctamente de la BDD según su ID
+        "500":
+          description: Pasó un error al momento de querer actualizar la cantidad de un producto al carrito
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/requestBodies/updateCartResponse'
+
+    delete:
+      summary: Borra un producto de un carrito a partir de su cid y pid
+      tags:
+      - Carts
+      parameters:
+      - name: cid
+        in: path
+        required: true
+        description: El id del carrito
+      - name: pid
+        in: path
+        required: true
+        description: El id del producto
+        schema:
+          type: string 
+      responses: 
+        "200":
+          description: El producto del carrito fue borrado correctamente de la BDD según su ID
+        "500":
+          description: Hubo un error al eliminar el producto del carrito por su ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/requestBodies/deleteCartResponse'
+
+  /deleteCart/{cid}:
+    delete:
+      summary: Elimina carrito según su ID
+      tags:
+      - Carts
+      parameters:
+      - name: cid
+        in: path
+        required: true
+        description: El id del carrito
+        schema:
+          type: string 
+      responses: 
+        "200":
+          description: El carrito fue eliminado correctamente de la BDD según su ID
+        "500":
+          description: Hubo un error al eliminar el carrito por su ID
+
+
+  /{cid}/purchase:
+    post:
+      summary: Crea una orden de compras de un carrito según su ID
+      tags:
+      - Carts
+      parameters:
+      - name: cid
+        in: path
+        required: true
+        description: El id del carrito
+        schema:
+          type: string 
+      responses: 
+        "404":
+          description: Carrito no encontrado
+        "200":
+          description: Se pudo crear con éxito la orden de compra
+        "500":
+          description: Hubo un error al querer crear la orden de compra
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/requestBodies/CartOrder'
+
+components:
+  schemas:
+    Cart:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: id generado de mongodb
+
+        products:
+          type: array
+          items:
+            type: object
+            properties:
+
+
+              id:
+                type: string
+                description: id del producto referenciado en la colección 'products'
+
+              quantity:
+                type: integer
+                description: Cantidad del producto en el carrito
+                default: 1
+        
+        __v:
+          type: integer
+          description: Versión del documento, utilizado para el control de versiones internas de MongoDB (campo autogenerado por MongoDB)
+
+      example :
+        {
+            _id: ObjectId("as234ghNmd"),
+            products: [
+                {
+                    id: ObjectId("az2532Nmd"),
+                    quantity: 1
+                }
+            ],
+            __v: 1
+        }
+
+
+  requestBodies :
+    updateCart :
+      type : object 
+      properties :
+        quantity:
+          type: integer
+          description: Cantidad del producto en el carrito
+          default: 1
+
+      example :
+        { quantity: 8 }
+
+
+
+    updateCartResponse:
+      type : object 
+      properties :
+        _id:
+          type: string
+          description: id generado de mongodb
+
+        products:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: id del producto referenciado en la colección 'products'
+              quantity:
+                type: integer
+                description: Cantidad del producto en el carrito
+                default: 1
+        
+        __v:
+          type: integer
+          description: Versión del documento, utilizado para el control de versiones internas de MongoDB (campo autogenerado por MongoDB)
+
+      example :
+        {
+            _id: ObjectId("as234ghNmd"),
+            products: [
+                {
+                    id: ObjectId("az2532Nmd"),
+                    quantity: 8
+                }
+            ],
+            __v: 1
+        }
+
+    updateCartPaginated:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: id generado de mongodb
+
+        products:
+          type: array
+          items:
+            type: object
+            properties:
+
+
+              id:
+                type: string
+                description: id del producto referenciado en la colección 'products'
+
+              quantity:
+                type: integer
+                description: Cantidad del producto en el carrito
+                default: 1
+        
+        __v:
+          type: integer
+          description: Versión del documento, utilizado para el control de versiones internas de MongoDB (campo autogenerado por MongoDB)
+
+      example :
+        {
+          status: 200,
+          payload: {
+              status: success,
+              payload: [
+                  {
+                      id: ObjectId("as234ghNmd"),
+                      "quantity": 3
+                  },
+                  {
+                      "id": ObjectId("asd314md"),
+                      "quantity": 1
+                  }
+              ],
+              totalPages: 1,
+              prevPage: null,
+              nextPage: null,
+              page: 1,
+              hasPrevPage: false,
+              hasNextPage: false
+          }
+        }
+
+      
+
+    deleteCartResponse:
+      type : object 
+      properties :
+        _id:
+          type: string
+          description: id generado de mongodb
+
+        products:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: id del producto referenciado en la colección 'products'
+              quantity:
+                type: integer
+                description: Cantidad del producto en el carrito
+                default: 1
+        
+        __v:
+          type: integer
+          description: Versión del documento, utilizado para el control de versiones internas de MongoDB (campo autogenerado por MongoDB)
+
+      example :
+        {
+            _id: ObjectId("as234ghNmd"),
+            products: [],
+            __v: 1
+        }
+
+    CartOrder:
+      type : object 
+      properties :
+        _id:
+          type: string
+          description: id generado de mongodb
+
+        products:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: id del producto referenciado en la colección 'products'
+              quantity:
+                type: integer
+                description: Cantidad del producto en el carrito
+                default: 1
+        
+        __v:
+          type: integer
+          description: Versión del documento, utilizado para el control de versiones internas de MongoDB (campo autogenerado por MongoDB)
+
+      example :
+        {
+            status: 200,
+            payload: {
+                ticket: {
+                    purchase_datetime: 2023-08-14T03:31:09.404Z,
+                    amount: 3000,
+                    purchaser: "oliverzapata.arg@gmail.com",
+                    _id: 64d99ffd814a9b8814460235,
+                    code: 1691983869407-027,
+                    __v: 0
+                },
+                "productsOutOfStock": []
+            }
+        }

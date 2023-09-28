@@ -1,0 +1,244 @@
+paths:
+  /api/products:
+    get:
+      summary: Obtiene todos los productos
+      tags:
+      - Products
+      responses:
+        "200":
+          description: Los productos fueron mostrados con éxito.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+        "500":
+          description: Pasó un error al momento de querer mostrar los productos.
+
+    post:
+      summary: Crea los productos
+      tags:
+      - Products
+      requestBody:
+        required: true
+        content:
+            application/json:
+              schema:
+                $ref: '#/components/requestBodies/updateProduct'
+      responses:
+        "200":
+          description: Los productos fueron creados con éxito.
+        "500":
+          description: Pasó un error al momento de querer crear los productos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+
+
+  /api/products/{pid}:
+    get:
+      summary: Obtiene un producto según su pid
+      tags:
+      - Products
+      parameters:
+      - name: pid
+        in: path
+        required: true
+        description: El id del producto
+        schema:
+          type: string 
+      responses: 
+        "200":
+          description: El producto fue obtenido satisfactoriamente de la BDD según su ID
+        "500":
+          description: Hubo un error al mostrar el producto por su ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+              
+    put:
+      summary: Actualiza el producto a partir de su pid
+      tags:
+      - Products
+      parameters:
+      - name: pid
+        in: path
+        required: true
+        description: El id del producto
+        schema:
+          type: string 
+      requestBody:
+        required: true
+        content:
+            application/json:
+              schema:
+                $ref: '#/components/requestBodies/updateProduct'
+      responses: 
+        "200":
+          description: El producto fue actualizado correctamente de la BDD según su ID
+        "400":
+          description: Valores incompletos
+        "404":
+          description: Producto no encontrado
+        "403":
+          description: No tienes permiso para realizar esta acción
+        "500":
+          description: Hubo un error al actualizar el producto por su ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+
+    delete:
+      summary: Borra un producto según su pid
+      tags:
+      - Products
+      parameters:
+      - name: pid
+        in: path
+        required: true
+        description: El id del producto
+        schema:
+          type: string 
+      responses: 
+        "404":
+          description: Producto no encontrado
+        "403":
+          description: No tienes permiso para realizar esta acción
+        "200":
+          description: El producto fue borrado satisfactoriamente de la BDD según su ID
+        "500":
+          description: Hubo un error al eliminar el producto por su ID
+
+
+
+  /api/products/mockingproducts:
+    post:
+      summary: Crea 50 productos mediante los mocks
+      tags:
+      - Products
+      responses:
+        "400":
+          description: Ya se han creado 50 productos
+        "200":
+          description: Se han creado 50 productos con éxito
+        "500":
+          description: Pasó un error al momento de querer crear los productos mediante los mocks
+
+
+  /api/products/deleteMockingProducts:
+    delete:
+      summary: elimina los 50 productos creador por el método de la ruta mockingproducts 
+      tags:
+      - Products
+      responses:
+        "200":
+          description: Se han creado 50 productos con éxito
+        "500":
+          description: Pasó un error al momento de querer crear los productos mediante los mocks
+
+
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: id generado de mongodb
+
+        title:
+          type: string
+          description: Nombre del producto
+
+        description:
+          type: string
+          description: Descripción del producto
+
+        price:
+          type: string
+          description: Precio del producto
+
+        thumbnail:
+          type: array
+          description: Imagen del producto
+
+        stock:
+          type: integer
+          description: Cantidad del producto
+
+        category:
+          type: string
+          description: Categoría del producto
+
+        status:
+          type: boolean
+          description: Es true si todo sale bien en el método
+
+        code:
+          type:boolean 
+          description:Igual que status 
+
+        isMockingProduct:
+          type:boolean 
+          description :Me permite borrar 
+
+        owner :
+          type:string 
+          description :Indica el email del usuario que creo el producto
+
+      example :
+        _id : ObjectId("as234ghNmd")
+        title : Silla de oficina 
+        description : Silla de oficina en excelente estado 
+        price : 3000 
+        thumbnail : ["https://i.ibb.co/P9Ytc2W/1-Silla-de-oficina.png"]
+        stock : 20 
+        category : Productos del hogar 
+        status : true 
+        code : true 
+        isMockingProduct : true 
+
+  requestBodies :
+    updateProduct :
+      type : object 
+      properties :
+        _id :
+          type : string 
+          description : id generado de mongodb 
+
+        title :
+          type : string 
+          description : Nombre del producto 
+
+        description :
+          type : string 
+          description : Descripción del producto 
+
+        price :
+          type : string 
+          description : Precio del producto 
+
+        thumbnail :
+          type : array 
+          description : Imagen del producto 
+
+        stock :
+          type : integer 
+          description : Cantidad del producto 
+
+        category :
+          type : string 
+          description : Categoría del producto 
+
+      example :
+        title : Silla de oficina 
+        description : Silla de oficina en excelente estado 
+        price : 3000 
+        thumbnail : ["https://i.ibb.co/P9Ytc2W/1-Silla-de-oficina.png"]
+        stock : 20 
+        category : Productos del hogar 

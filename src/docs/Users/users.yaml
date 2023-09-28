@@ -1,0 +1,41 @@
+paths:
+  /premium/{id}:
+    get:
+      summary: Cambia el rol de usuario a premium y de premium a usuario
+      tags:
+      - Users
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: El id del usuario
+        schema:
+          type: string 
+      responses:
+        "200":
+          description: El usuario a cambiado de rol de forma éxitosa.
+        "404":
+          description: Usuario no encontrado
+        "403":
+          description: Solo los usuarios con rol user pueden cambiar a premium
+        "400":
+          description: No se puede actualizar al usuario a premium porque le faltan los siguientes documentos (nombra lo documentos que faltan subir para pasar a premium)
+
+
+  /{id}/documents:
+    post:
+      summary: Permite subir archivos en postman creando una "key" donde se específica la carpeta en donde se quiere el documento y en "value" se coloca el archivo que se desea subir
+      tags:
+      - Users
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: El id del producto
+        schema:
+          type: string 
+      responses: 
+        "404":
+          description: Usuario no encontrado
+        "200":
+          description: Documentos cargados con éxito
